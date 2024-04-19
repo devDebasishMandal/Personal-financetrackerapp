@@ -4,10 +4,11 @@ import './styles.css'
 
 
 
-const Button = ({text,onClick}) => {
+const Button = ({text,onClick,blue}) => {
   return (
-    <div>Button</div>
+    <div onClick={onClick} className={blue ? "btn btn-blue":"btn"}>{text}</div>
   )
 }
 
-export default Button
+export default Button;
+
