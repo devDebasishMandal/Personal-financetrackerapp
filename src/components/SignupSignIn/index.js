@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
 } from "firebase/auth";
-import { auth, db } from "../../firebase";
+import { auth, db, provider } from "../../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import "./styles.css";
 import Input from "../Input/index";
@@ -62,38 +64,6 @@ const SignupSigninComponent = () => {
     }
 
     // console.log(`Name:${name} \n Email:${email}\n Password:${password}\n ConfirmPassword :${confirmPassword}`);
-
-    // USER SIGN IN USING EMAIL AND PASS
-
-    async function createDoc(user) {
-      // make sure that the doc with current UID doesnot exist
-      // create a DOC
-      //if user doesnot exist return
-       setLoading(true);
-      if (!user) return;
-
-      const userRef = doc(db, "users", user.uid);
-      const userData = await getDoc(userRef);
-
-      if (!userData.exists()) {
-        // Add a new document in collection "users"
-        try {
-          await setDoc(doc(db, "users", user.uid), {
-            name: user.displayName ? user.displayName : name,
-            email: user.email,
-            photoURL: user.photoURL ? user.photoURL : "",
-            createdAt: new Date(),
-          });
-          toast.success("Doc Created");
-           setLoading(false);
-        } catch (error) {
-          toast.error = error.message;
-          setLoading(false);
-        }
-      } else {
-        toast.error("doc already exists");
-      }
-    }
   };
 
   function loginUsingEmail() {
@@ -122,6 +92,72 @@ const SignupSigninComponent = () => {
         });
     }
   }
+
+  function googleAuth() {
+    setLoading(true);
+    // both login and signup are same for this function
+    try {
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          // This gives you a Google Access Token. You can use it to access the Google API.
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          const token = credential.accessToken;
+          // The signed-in user info.
+          const user = result.user;
+          // IdP data available using getAdditionalUserInfo(result)
+          // ...
+          createDoc(user);
+          navigate("/dashboard");
+          setLoading(false);
+          console.log("USER>>>>", user);
+          toast.success("User Authenticated");
+        })
+        .catch((error) => {
+          // Handle Errors here.
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          // The email of the user's account used.
+          const email = error.customData.email;
+          // The AuthCredential type that was used.
+          const credential = GoogleAuthProvider.credentialFromError(error);
+          // ...
+          setLoading(false);
+          toast.error(errorMessage);
+        });
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
+  async function createDoc(user) {
+    // make sure that the doc with current UID doesnot exist
+    // create a DOC
+    //if user doesnot exist return
+    setLoading(true);
+    if (!user) return;
+
+    const userRef = doc(db, "users", user.uid);
+    const userData = await getDoc(userRef);
+
+    if (!userData.exists()) {
+      // Add a new document in collection "users"
+      try {
+        await setDoc(doc(db, "users", user.uid), {
+          name: user.displayName ? user.displayName : name,
+          email: user.email,
+          photoURL: user.photoURL ? user.photoURL : "",
+          createdAt: new Date(),
+        });
+        toast.success("Doc Created");
+        setLoading(false);
+      } catch (error) {
+        toast.error = error.message;
+        setLoading(false);
+      }
+    } else {
+      // toast.error("doc already exists");
+    }
+  }
+
   return (
     <>
       {login ? (
@@ -152,6 +188,7 @@ const SignupSigninComponent = () => {
             />
             <p className="p-login">OR</p>
             <Button
+              onClick={googleAuth}
               text={loading ? "Loading..." : "Login Using Google "}
               blue={true}
             />
@@ -210,6 +247,7 @@ const SignupSigninComponent = () => {
             />
             <p className="p-login">OR</p>
             <Button
+              onClick={googleAuth}
               text={loading ? "Loading..." : "Signup Using Google "}
               blue={true}
             />
