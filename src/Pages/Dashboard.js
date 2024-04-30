@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/header";
 import Cards from "../components/Cards";
 import { Form } from "antd";
-// import {Modal} from "antd";
 import AddIncomeModal from "../components/Modals/AddIncome";
 import AddExpenseModal from "../components/Modals/AddExpense";
 import { addDoc, collection, query, getDocs } from "firebase/firestore";
@@ -20,7 +19,7 @@ const Dashboard = () => {
 
   const [isExpenseModalVisible, setIsExpenseModalVisible] = useState(false);
   const [isIncomeModalVisible, setIsIncomeModalVisible] = useState(false);
-  const [form] = Form.useForm();
+  // const [form] = Form.useForm();
 
   const [income, setIncome] = useState(0);
   const [expense, setExpense] = useState(0);
@@ -43,80 +42,76 @@ const Dashboard = () => {
     setIsIncomeModalVisible(false);
     // form.resetFields();
   };
-    useEffect(() => {
-      //fetching all the docs form a collection L_9
-      fetchTransaction();
-    }, []);
 
- const onFinish = (values, type) => {
-   // console.log("this is don",values,type);
-   // we create a new object to store in the DB
-   const newTransaction = {
-     type: type,
-     amount: parseFloat(values.amount),
-     // amount:values.amount,
-     date: moment(values.date).format("YYYY-MM-DD"),
-     tag: values.tag,
-     name: values.name,
-   };
-   // console.log(newTransaction);
-   addTransaction(newTransaction);
-   // ----- fetching  new transactions -----
-  //  fetchTransaction();
-  //  calculateBalance();
+  // 1.fetch all transaction on 1st load
+  useEffect(() => {
+    //fetching all the docs form a collection L_9
+    fetchTransaction();
+  }, [user]);
+  //2 get the transaction from user
+  const onFinish = (values, type) => {
+    // console.log("this is don",values,type);
+    // we create a new object to store in the DB
+    const newTransaction = {
+      type: type,
+      amount: parseFloat(values.amount),
+      date: values.date.format("YYYY-MM-DD"),
+      tag: values.tag,
+      name: values.name,
+    };
+    // console.log(newTransaction);
+    addTransaction(newTransaction);
+    // ----- fetching  new transactions -----
+    //  fetchTransaction();
+    //  calculateBalance();
 
     setIsExpenseModalVisible(false);
     setIsIncomeModalVisible(false);
- };
+  };
+  // 3 add the new transaction to the DB coll^n
+  // calculate the new balance
+  async function addTransaction(transaction) {
+    try {
+      const docRef = await addDoc(
+        collection(db, `users/${user.uid}/transactions`),
+        transaction
+      );
 
-
-    async function fetchTransaction() {
-      setLoading(true);
-      if (user) {
-        const q = query(collection(db, `users/${user.uid}/transactions`));
-
-        const querySnapshot = await getDocs(q);
-
-        let transactionsArray = [];
-
-        querySnapshot.forEach((doc) => {
-          transactionsArray.push(doc.data());
-        });
-
-        setTransactions(transactionsArray);
-        console.log(transactions);
-
-        toast.success("Transactions Fetched");
-      }
-      setLoading(false);
-    }
-    
-
- 
-   async function addTransaction(transaction) {
-     try {
-       const docRef = await addDoc(
-         collection(db, `users/${user.uid}/transactions`),
-         transaction
-       );
-
-       // console.log(docRef.id);
-       toast.success("Transaction Added");
+      // console.log(docRef.id);
+      toast.success("Transaction Added");
       // ----- fetching  new transactions -----
-       const newArr= transactions;
-       newArr.push(transaction);
-       setTransactions(newArr);
-       calculateBalance();
+      const newArr = transactions;
+      newArr.push(transaction);
+      setTransactions(newArr);
+      calculateBalance();
+    } catch (error) {
+      console.error("Error Adding Document", error);
+      toast.error("Couldn't Add Transaction");
+    }
+  }
+  // 4 get all the transaction form the DB for display
+  async function fetchTransaction() {
+    setLoading(true);
+    if (user) {
+      const q = query(collection(db, `users/${user.uid}/transactions`));
 
-     } catch (error) {
-       console.error("Error Adding Document", error);
-       toast.error("Couldn't Add Transaction");
-     }
-   }
+      const querySnapshot = await getDocs(q);
 
- 
+      let transactionsArray = [];
 
+      querySnapshot.forEach((doc) => {
+        transactionsArray.push(doc.data());
+      });
 
+      setTransactions(transactionsArray);
+      // console.log(transactions);
+
+      toast.success("Transactions Fetched");
+    }
+    setLoading(false);
+  }
+  // whenever there is change in the transactions array
+  // of the user re-calculate the balance of the user
   useEffect(() => {
     calculateBalance();
   }, [transactions]);
@@ -134,10 +129,8 @@ const Dashboard = () => {
     });
     setIncome(incomeTotal);
     setExpense(expenseTotal);
-
     setTotalBalance(incomeTotal - expenseTotal);
   }
-
 
   return (
     <div>
