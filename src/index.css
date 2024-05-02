@@ -30,3 +30,50 @@ margin-top: -1rem !important;
   color: rgba(0,0,0,0.5);
 }
 
+
+.top-input {
+  display: flex;
+  justify-content:center;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.5rem 1rem;
+}
+
+.input-flex {
+  display: flex;
+  justify-content:flex-start;
+  align-items: center;
+  /* gap:0.5rem; */
+  width:80%;
+  box-shadow: 0px 0px 30px 8px rgba(227,227,227,0.75);
+  border-radius: 0.5rem;
+  /* padding: 0rem 0.5rem; */
+  /* margin: 1rem 0.8rem; */
+}
+
+
+.input-flex input {
+  width:90%;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+.input-flex input:focus {
+  outline: none;
+  opacity: 1;
+  transition: all 0.3s;
+}
+
+.select-input {
+  width: 25%;
+    box-shadow: 0px 0px 30px 8px rgba(227,227,227,0.75);
+    border-radius: 0.5rem;
+}
+
+.mid-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.8rem;
+}
