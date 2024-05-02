@@ -94,8 +94,8 @@ const TransactionsTable = ({ transactions }) => {
           <Radio.Button value="amount">Sort by Amount</Radio.Button>
         </Radio.Group>
         <div>
+          <Button>Export to CSV</Button>
           <Button type="primary">Import from CSV</Button>
-          <Button>Default Button</Button>
         </div>
       </div>
 
