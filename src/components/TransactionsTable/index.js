@@ -1,8 +1,16 @@
 import React, { useState } from "react";
-import { Select, Table, Radio} from "antd";
+import { Select, Table, Radio, message} from "antd";
 import { Button } from "antd";
-import searchImg from "../../assets/search.svg"
-const TransactionsTable = ({ transactions }) => {
+import searchImg from "../../assets/search.svg";
+import { parse, unparse } from "papaparse";
+import { toast } from "react-toastify";
+
+
+const TransactionsTable = ({
+  transactions,
+  addTransaction,
+  fetchTransaction,
+}) => {
   const { Option } = Select;
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -38,13 +46,13 @@ const TransactionsTable = ({ transactions }) => {
   function handleSearch(e) {
     setSearch(e.target.value);
   }
-
+  //---------------------
   let filteredTransactions = transactions.filter(
     (item) =>
       item.name.toLowerCase().includes(search.toLowerCase()) &&
       item.type.includes(typeFilter)
   );
-
+  //--------------------
   let sortedTransactions = filteredTransactions.sort((a, b) => {
     if (sortKey === "date") {
       return new Date(a.date) - new Date(b.date);
@@ -54,6 +62,53 @@ const TransactionsTable = ({ transactions }) => {
       return 0;
     }
   });
+  //----------------------
+  // converting JSON data to CSV File and Download
+  function exportCSV() {
+    var csv = unparse({
+      fields: ["name", "type", "tag", "date", "amount"],
+      data: transactions,
+    });
+    // to download the file creating a BLOB
+    const bolb = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    // bolb is the data
+    const url = URL.createObjectURL(bolb);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "transactions.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+  //--------------------
+  function importCSV(event) {
+    event.preventDefault();
+    try {
+      //when there is more then one file selectedwe get array
+      parse(event.target.files[0], {
+        header: true,
+        complete: async function (results) {
+          // results.data is an array of objects
+          // representing rows of the CSV
+          for (const transaction of results.data) {
+            // writing each transaction to firebase
+            // using the addTransaction function here
+            const newTransaction = {
+              ...transaction,
+              amount: parseFloat(transaction.amount),
+            };
+            await addTransaction(newTransaction, true);
+          }
+        },
+      });
+      toast.success("All Transactions Added");
+      fetchTransaction();
+      event.target.files = null;
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
+
   return (
     <>
       <div className="top-input">
@@ -93,9 +148,21 @@ const TransactionsTable = ({ transactions }) => {
           <Radio.Button value="date">Sort by Date</Radio.Button>
           <Radio.Button value="amount">Sort by Amount</Radio.Button>
         </Radio.Group>
-        <div>
-          <Button>Export to CSV</Button>
-          <Button type="primary">Import from CSV</Button>
+        <div className="end-input">
+          <Button className="btn" onClick={exportCSV}>
+            Export to CSV
+          </Button>
+          <label for="file-csv" className="btn btn-blue">
+            Import from CSV
+          </label>
+          <input
+            id="file-csv"
+            type="file"
+            accept=".csv"
+            required
+            onChange={importCSV}
+            style={{ display: "none" }}
+          />
         </div>
       </div>
 

@@ -70,7 +70,7 @@ const Dashboard = () => {
   };
   // 3 add the new transaction to the DB coll^n
   // calculate the new balance
-  async function addTransaction(transaction) {
+  async function addTransaction(transaction,many) {
     try {
       const docRef = await addDoc(
         collection(db, `users/${user.uid}/transactions`),
@@ -78,7 +78,7 @@ const Dashboard = () => {
       );
 
       // console.log(docRef.id);
-      toast.success("Transaction Added");
+    !many &&  toast.success("Transaction Added");
       // ----- fetching  new transactions -----
       const newArr = transactions;
       newArr.push(transaction);
@@ -86,7 +86,7 @@ const Dashboard = () => {
       calculateBalance();
     } catch (error) {
       console.error("Error Adding Document", error);
-      toast.error("Couldn't Add Transaction");
+    !many&&toast.error("Couldn't Add Transaction");
     }
   }
   // 4 get all the transaction form the DB for display
@@ -158,7 +158,11 @@ const Dashboard = () => {
             handleIncomeCancel={handleIncomeCancel}
             onFinish={onFinish}
           />
-          <TransactionsTable transactions={transactions} />
+          <TransactionsTable
+            transactions={transactions}
+            addTransaction={addTransaction}
+            fetchTransaction={fetchTransaction}
+          />
         </>
       )}
     </div>
